@@ -28,7 +28,7 @@ build_script:
 
 
 
-    cmake -G"Visual Studio 16 2019" -A x64 -DZYDIS_BUILD_EXAMPLES=OFF -DZYDIS_BUILD_TOOLS=OFF..
+    cmake -G"Visual Studio 16 2019" -A x64 -DZYDIS_BUILD_EXAMPLES=OFF -DZYDIS_BUILD_TOOLS=OFF ..
 
 
 
