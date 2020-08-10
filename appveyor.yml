@@ -12,6 +12,10 @@ clone_script:
 
     git checkout -qf %APPVEYOR_REPO_COMMIT%
 
+environment:
+
+  BOOST_ROOT: C:\Libraries\boost_1_73_0
+
 build_script:
 
 - cmd: >-
