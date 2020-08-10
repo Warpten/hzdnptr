@@ -1,0 +1,26 @@
+version: 1.0.{build}
+image: Visual Studio 2019
+clone_depth: 1
+init:
+- ps: ''
+environment:
+  BOOST_ROOT: C:\Libraries\boost_1_73_0
+build_script:
+- cmd: >-
+    git config user.email "appveyor@build.bot" && git config user.name "AppVeyor"
+
+    git tag -a -m "AppVeyor build" init
+
+    md build && cd build
+
+    cmake -G"Visual Studio 16 2019" -A x64 -DZYDIS_BUILD_EXAMPLES=OFF -DZYDIS_BUILD_TOOLS=OFF..
+
+    "%programfiles(x86)%\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\amd64\MsBuild.exe" /nologo /m:2 /p:Configuration=Release /p:Platform="X64" /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" "hzdnptr.sln"
+
+    cd bin\RelWithDebInfo\
+
+    7z a hzdnptr.zip injecter.exe patchdll.dll
+test: off
+artifacts:
+- path: build\bin\RelWithDebInfo\hzdnptr.zip
+  name: hzdnptr
