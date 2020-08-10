@@ -4,6 +4,10 @@ Horizon: Zero Dawn - Nullptr Edition
 ====
 This repository contains the code for an injectable DLL used to patch potential crashes due to null pointer dereferences (amongst other funsies) in Guerilla's recent Horizon: Zero Dawn PC release.
 
+[![Build status](https://ci.appveyor.com/api/projects/status/eathqpg9rxjba75f?svg=true)](https://ci.appveyor.com/project/Warpten/hzdnptr)
+
+For nightly builds, visit [AppVeyor](https://ci.appveyor.com/project/Warpten/hzdnptr/build/artifacts)
+
 ## Disclaimer
 
 ```
