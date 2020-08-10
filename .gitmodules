@@ -1,3 +1,6 @@
 [submodule "submodules/zydis"]
 	path = submodules/zydis
 	url = https://github.com/zyantific/zydis
+[submodule "submodules/fmt"]
+	path = submodules/fmt
+	url = https://github.com/fmtlib/fmt
