@@ -15,8 +15,7 @@ namespace Patches
     namespace DebugLogs
     {
         constexpr static const Memory::Scan::Pattern NullWrites[] = { 0xC7, 0x04, 0x25, 0x00, 0x00, 0x00, 0x00, 0xA7, 0xDC, 0xEA, 0x0D };
-        std::vector<uintptr_t> faultyAddresses;
-
+        
         LONG WINAPI UnhandledExceptionFilter(_EXCEPTION_POINTERS* exceptionInfo)
         {
             if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
@@ -27,9 +26,7 @@ namespace Patches
                     std::cout << fmt::format("Intercepted invalid memory write to 0x{:X}", exceptionInfo->ExceptionRecord->ExceptionInformation[1]) << std::endl;
 
                     // Silence the error
-                    auto itr = std::find(faultyAddresses.begin(), faultyAddresses.end(), exceptionInfo->ExceptionRecord->ExceptionInformation[1]);
-                    if (itr != faultyAddresses.end())
-                        return EXCEPTION_CONTINUE_EXECUTION;
+                    return EXCEPTION_CONTINUE_EXECUTION;
                 }
             }
 
@@ -41,7 +38,7 @@ namespace Patches
         {
             std::cout << "[+] Scanning executable code for faulty instructions leading to crashes... " << std::endl;
 
-            faultyAddresses = Memory::Scan::Find(NullWrites, uintptr_t(GetModuleHandle(nullptr)));
+            std::vector<uintptr_t> faultyAddresses = Memory::Scan::Find(NullWrites, uintptr_t(GetModuleHandle(nullptr)));
 
             ZydisDecoder decoder;
             ZyanStatus result = ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64);
@@ -96,7 +93,7 @@ namespace Patches
 
             SetUnhandledExceptionFilter(&UnhandledExceptionFilter);
             AddVectoredExceptionHandler(1 /* Call first */, &UnhandledExceptionFilter);
-            std::cout << fmt::format("[+] Exception handler installed.");
+            std::cout << "[+] Exception handler installed." << std::endl;
         }
     }
 }
