@@ -20,6 +20,7 @@ target_link_libraries(patchdll
     Zydis
     minhook
     fmt
+    spdlog
 )
 
 target_include_directories(patchdll
@@ -30,7 +31,7 @@ target_include_directories(patchdll
     ${MINHOOK_INCLUDE_DIR}
 )
 
-add_dependencies(patchdll Zydis minhook fmt)
+add_dependencies(patchdll Zydis minhook fmt spdlog)
 
 add_definitions(-DWIN32_LEAN_AND_MEAN)
 add_definitions(-DNOMINMAX)

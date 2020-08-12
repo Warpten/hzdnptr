@@ -1,4 +1,5 @@
 #include "Function.hpp"
+#include "../MemoryHelpers.hpp"
 
 #include <Zydis/Utils.h>
 
@@ -22,13 +23,13 @@ namespace Assembly
                     return operand.type == ZYDIS_OPERAND_TYPE_IMMEDIATE;
                 });
 
-                if (immediateOperand != nullptr && node->BranchTarget == nullptr)
+                if (immediateOperand != nullptr && node->_branchTarget.expired())
                 {
                     uintptr_t jumpTarget = 0;
                     ZydisCalcAbsoluteAddress(&lastInstruction.Decoded, immediateOperand, lastInstruction.Address, &jumpTarget);
 
                     NodePtr jumpTargetNode = this->TryGetNode(jumpTarget, node);
-                    node->BranchTarget = jumpTargetNode;
+                    node->_branchTarget = jumpTargetNode;
 
                     collectNodes(jumpTargetNode);
                 }
@@ -37,10 +38,10 @@ namespace Assembly
             if (lastInstruction.Decoded.meta.category == ZYDIS_CATEGORY_RET)
                 return;
 
-            if (node->Next == nullptr)
+            if (node->_next.expired())
             {
                 NodePtr nextNode = this->TryGetNode(lastInstruction.Address + lastInstruction.Decoded.length, node);
-                node->Next = nextNode;
+                node->_next = nextNode;
                 collectNodes(nextNode);
             }
         };
@@ -56,10 +57,10 @@ namespace Assembly
             return itr->second;
 
         // Node not found, create it
-        std::shared_ptr<Node> node = std::make_shared<Node>(InstructionBlock{ address, _decoder }, parent);
+        std::shared_ptr<Node> node = std::make_shared<Node>(InstructionBlock{ address, _decoder });
         auto pair = this->_nodeCache.emplace(std::piecewise_construct,
             std::forward_as_tuple(address),
-            std::forward_as_tuple(std::make_shared<Node>(InstructionBlock{ address, _decoder }, parent)));
+            std::forward_as_tuple(std::make_shared<Node>(InstructionBlock{ address, _decoder })));
 
         if (pair.second)
             return pair.first->second;
@@ -116,16 +117,26 @@ namespace Assembly
         // node in the cycle (A, B and C) depend on D, meaning that every node depending on A's output
         // actually depends on D, maintaining a dependency chain.
         std::unordered_set<std::shared_ptr<Node>> exploredNodes;
+        exploredNodes.emplace(nullptr); // To avoid processing empty nodes, dirty trick
 
         std::function<std::pair<bool, std::shared_ptr<Node>>(std::shared_ptr<Node>)> findLastBlock;
         findLastBlock = [&findLastBlock, &exploredNodes, &findEpilogueStart](std::shared_ptr<Node> currentBlock) -> std::pair<bool, std::shared_ptr<Node>>
         {
             exploredNodes.insert(currentBlock);
 
+            auto branchTargetBlock = currentBlock->GetBranchTarget();
+
+
             Instruction const& lastInstruction = currentBlock->Block.GetLastInstruction();
             // investigate the branch target if it exists and if it hasn't been processed yet
-            if (lastInstruction.Decoded.meta.category == ZYDIS_CATEGORY_UNCOND_BR && currentBlock->BranchTarget && exploredNodes.count(currentBlock->BranchTarget) == 0)
+            if (lastInstruction.Decoded.meta.category == ZYDIS_CATEGORY_UNCOND_BR && exploredNodes.count(branchTargetBlock) == 0)
             {
+                // -- -- -- -- -- -- -- SHORTCUT -- -- -- -- -- -- -- 
+                // if the unconditional branch is followed by alignment padding (CC chains) we know this is the function end
+                // thanks to how compilers generally generate code.
+                if (Memory::ReadMemory<uint8_t>(lastInstruction.Address + lastInstruction.Decoded.length, false) == 0xCC)
+                    return std::make_pair(true, currentBlock);
+
                 // If unconditional jump this could still be an epilogue
                 // Consider the following:
                 //   push rbx
@@ -143,7 +154,8 @@ namespace Assembly
                 //   add rsp, 0x20
                 // as epilogue, not
                 //   add rsp, 0x28
-                Instruction const& branchTarget = currentBlock->BranchTarget->Block.GetFirstInstruction();
+                Instruction const& branchTarget = branchTargetBlock->Block.GetFirstInstruction();
+
                 if (branchTarget.Decoded.mnemonic == ZYDIS_MNEMONIC_SUB)
                 {
                     auto registerOperand = branchTarget.GetOperand([](ZydisDecodedOperand const& operand) {
@@ -170,7 +182,7 @@ namespace Assembly
                 return std::make_pair(true, currentBlock);
             }
 
-            for (std::shared_ptr<Node> child : { currentBlock->BranchTarget, currentBlock->Next })
+            for (std::shared_ptr<Node> child : { branchTargetBlock, currentBlock->GetNext() })
             {
                 // Recursively search through children if they haven't been processed yet
                 if (child && exploredNodes.count(child) == 0)

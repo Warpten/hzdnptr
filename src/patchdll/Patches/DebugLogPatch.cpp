@@ -5,8 +5,7 @@
 #include "../Scan.hpp"
 #include "../MemoryHelpers.hpp"
 
-#include <fmt/format.h>
-#include <iostream>
+#include "../Logger.hpp"
 
 #include <windows.h>
 
@@ -23,7 +22,7 @@ namespace Patches
                 // Invalid memory write
                 if (exceptionInfo->ExceptionRecord->ExceptionInformation[0] == 1)
                 {
-                    std::cout << fmt::format("Intercepted invalid memory write to 0x{:X}", exceptionInfo->ExceptionRecord->ExceptionInformation[1]) << std::endl;
+                    Logger::Instance().GetLogger("console")->info("Intercepted invalid memory write to 0x{:X}", exceptionInfo->ExceptionRecord->ExceptionInformation[1]);
 
                     // Silence the error
                     return EXCEPTION_CONTINUE_EXECUTION;
@@ -36,7 +35,9 @@ namespace Patches
 
         void ApplyPatches()
         {
-            std::cout << "[+] Scanning executable code for faulty instructions leading to crashes... " << std::endl;
+            auto console = Logger::Instance().GetLogger("console");
+
+            console->info("Scanning executable code for faulty instructions leading to crashes... ");
 
             std::vector<uintptr_t> faultyAddresses = Memory::Scan::Find(NullWrites, uintptr_t(GetModuleHandle(nullptr)));
 
@@ -45,6 +46,7 @@ namespace Patches
 
             uintptr_t moduleBase = uintptr_t(GetModuleHandle(nullptr));
 
+            uint32_t failedCount = 0;
             for (uintptr_t faultyAddress : faultyAddresses)
             {
                 Assembly::Function function(faultyAddress, decoder);
@@ -52,11 +54,9 @@ namespace Patches
 
                 if (!epilogueAddress)
                 {
-                    std::cout
-                        << fmt::format("[+] Invalid memory write found at 0x{:x} (HorizonZeroDawn.exe+0x{:x}) but function epilogue was not detected.",
-                            faultyAddress, faultyAddress - moduleBase)
-                        << std::endl;
-                    continue;
+                    ++failedCount;
+                    console->error("[+] Invalid memory write found at 0x{:x} (HorizonZeroDawn.exe+0x{:x}) but function epilogue was not detected.",
+                        faultyAddress, faultyAddress - moduleBase);
                 }
                 else
                 {
@@ -75,25 +75,21 @@ namespace Patches
                         Memory::WriteMemory(faultyAddress, patchData, false);
                         Memory::FlushInstructionCache(faultyAddress, sizeof(patchData), false);
 
-                        std::cout
-                            << fmt::format("[+] Invalid memory write patched to an early exit at 0x{:x} (HorizonZeroDawn.exe+0x{:x}).",
-                                faultyAddress, faultyAddress - moduleBase)
-                            << std::endl;
+                        console->info("Invalid memory write patched to an early exit at 0x{:x} (HorizonZeroDawn.exe+0x{:x}).",
+                            faultyAddress, faultyAddress - moduleBase);
                     }
                     else
                     {
-                        std::cout
-                            << fmt::format("[+] Invalid memory write at 0x{:x} (HorizonZeroDawn.exe+0x{:x}) is too far away "
-                                "from end of function ({} bytes) for a patch.", faultyAddress, std::abs(int32_t(distance)))
-                            << std::endl;
+                        ++failedCount;
+                        console->error("Invalid memory write at 0x{:x} (HorizonZeroDawn.exe+0x{:x}) is too far away "
+                            "from end of function ({} bytes) for a patch.", faultyAddress, std::abs(int32_t(distance)));
                     }
-
                 }
             }
 
             SetUnhandledExceptionFilter(&UnhandledExceptionFilter);
             AddVectoredExceptionHandler(1 /* Call first */, &UnhandledExceptionFilter);
-            std::cout << "[+] Exception handler installed." << std::endl;
+            console->info(" Exception handler installed as a fallback for {} memory locations unable to be patched.", failedCount);
         }
     }
 }

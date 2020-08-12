@@ -13,12 +13,19 @@ namespace Assembly
     {
         struct Node
         {
-            Node(InstructionBlock const& block, std::shared_ptr<Node> parent) : Block(block), Previous(parent) { }
+            Node(InstructionBlock const& block) : Block(block) { }
 
             InstructionBlock Block;
-            std::shared_ptr<Node> Next;
-            std::shared_ptr<Node> BranchTarget;
-            std::shared_ptr<Node> Previous;
+            std::weak_ptr<Node> _next;
+            std::weak_ptr<Node> _branchTarget;
+
+            std::shared_ptr<Node> GetNext() const {
+                return _next.lock();
+            }
+
+            std::shared_ptr<Node> GetBranchTarget() const {
+                return _branchTarget.lock();
+            }
         };
 
         Function(uintptr_t address, ZydisDecoder& decoder);
