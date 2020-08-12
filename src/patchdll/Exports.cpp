@@ -39,6 +39,7 @@ extern "C"
 #endif
 
 		auto logger = Logger::Instance().RegisterLogger("console", { fileSink, outSink });
+		auto gameLogger = Logger::Instance().RegisterLogger("game", { fileSink, outSink });
 
 		logger->info("Log file '{}' opened.", fs::absolute(fileSink->filename()).string());
 		

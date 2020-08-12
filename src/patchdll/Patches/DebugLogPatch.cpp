@@ -55,7 +55,7 @@ namespace Patches
                 if (!epilogueAddress)
                 {
                     ++failedCount;
-                    console->error("[+] Invalid memory write found at 0x{:x} (HorizonZeroDawn.exe+0x{:x}) but function epilogue was not detected.",
+                    console->error("Invalid memory write found at 0x{:x} (HorizonZeroDawn.exe+0x{:x}) but function epilogue was not detected.",
                         faultyAddress, faultyAddress - moduleBase);
                 }
                 else
@@ -89,7 +89,7 @@ namespace Patches
 
             SetUnhandledExceptionFilter(&UnhandledExceptionFilter);
             AddVectoredExceptionHandler(1 /* Call first */, &UnhandledExceptionFilter);
-            console->info(" Exception handler installed as a fallback for {} memory locations unable to be patched.", failedCount);
+            console->info("Exception handler installed as a fallback for {} memory locations unable to be patched.", failedCount);
         }
     }
 }
