@@ -3,7 +3,7 @@
 
 #include "../span.hpp"
 
-#include <Zydis/Decoder.h>
+#include <Zydis/DecoderTypes.h>
 
 #include <cstdint>
 #include <functional>
@@ -12,7 +12,7 @@ namespace Assembly
 {
     struct Instruction final
     {
-        Instruction(uintptr_t address, ZydisDecoder& decoder);
+        Instruction(uintptr_t address);
 
         tcb::span<ZydisDecodedOperand const> GetOperands() const;
 
@@ -21,9 +21,6 @@ namespace Assembly
 
         ZydisDecodedInstruction Decoded;
         uintptr_t Address;
-
-    private:
-        ZydisDecoder& _decoder;
     };
 }
 

@@ -11,7 +11,7 @@ namespace Assembly
 {
     struct InstructionBlock final
     {
-        InstructionBlock(uintptr_t address, ZydisDecoder& decoder);
+        InstructionBlock(uintptr_t addresss);
         InstructionBlock(InstructionBlock const&) = default;
         InstructionBlock(InstructionBlock&&) = default;
 
@@ -21,7 +21,6 @@ namespace Assembly
         std::vector<Instruction> const& GetInstructions() const { return _instructions; }
 
     private:
-        ZydisDecoder& _decoder;
         std::vector<Instruction> _instructions;
     };
 }

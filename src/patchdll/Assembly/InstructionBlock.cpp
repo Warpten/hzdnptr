@@ -2,11 +2,11 @@
 
 namespace Assembly
 {
-    InstructionBlock::InstructionBlock(uintptr_t address, ZydisDecoder& decoder) : _decoder(decoder)
+    InstructionBlock::InstructionBlock(uintptr_t address)
     {
         while (true)
         {
-            Instruction const& lastInstruction = _instructions.emplace_back(address, decoder);
+            Instruction const& lastInstruction = _instructions.emplace_back(address);
 
             if (lastInstruction.Decoded.meta.category == ZYDIS_CATEGORY_RET)
                 break;

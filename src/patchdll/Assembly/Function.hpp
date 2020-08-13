@@ -28,15 +28,13 @@ namespace Assembly
             }
         };
 
-        Function(uintptr_t address, ZydisDecoder& decoder);
+        Function(uintptr_t address);
 
         std::optional<uintptr_t> FindEpilogue() const;
 
     private:
 
         std::shared_ptr<Node> TryGetNode(uintptr_t address, std::shared_ptr<Node> parent);
-
-        ZydisDecoder& _decoder;
 
         std::shared_ptr<Node> _front;
         std::unordered_map<uintptr_t, std::shared_ptr<Node>> _nodeCache;

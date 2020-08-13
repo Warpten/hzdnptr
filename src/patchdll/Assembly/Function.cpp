@@ -9,7 +9,7 @@
 
 namespace Assembly
 {
-    Function::Function(uintptr_t address, ZydisDecoder& decoder) : _decoder(decoder)
+    Function::Function(uintptr_t address)
     {
         using NodePtr = std::shared_ptr<Node>;
 
@@ -57,10 +57,10 @@ namespace Assembly
             return itr->second;
 
         // Node not found, create it
-        std::shared_ptr<Node> node = std::make_shared<Node>(InstructionBlock{ address, _decoder });
+        std::shared_ptr<Node> node = std::make_shared<Node>(InstructionBlock{ address });
         auto pair = this->_nodeCache.emplace(std::piecewise_construct,
             std::forward_as_tuple(address),
-            std::forward_as_tuple(std::make_shared<Node>(InstructionBlock{ address, _decoder })));
+            std::forward_as_tuple(std::make_shared<Node>(InstructionBlock{ address })));
 
         if (pair.second)
             return pair.first->second;

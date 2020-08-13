@@ -1,11 +1,12 @@
 #include "Instruction.hpp"
+#include "Decoder.hpp"
 
 namespace Assembly
 {
-    Instruction::Instruction(uintptr_t address, ZydisDecoder& decoder)
-        : Address(address), _decoder(decoder)
+    Instruction::Instruction(uintptr_t address)
+        : Address(address)
     {
-        ZydisDecoderDecodeBuffer(&decoder, reinterpret_cast<uint8_t*>(address), ZYDIS_MAX_INSTRUCTION_LENGTH, &Decoded);
+        Assembly::Decoder::Decode(address, Decoded);
     }
 
     tcb::span<ZydisDecodedOperand const> Instruction::GetOperands() const
