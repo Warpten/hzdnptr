@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string_view>
 
+#include <windows.h>
+
 namespace Memory
 {
     uintptr_t RebaseAddress(uintptr_t address);
