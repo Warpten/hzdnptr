@@ -112,8 +112,12 @@ namespace Hooks
             Register(uintptr_t(reinterpret_cast<uint8_t*>(source)));
         }
 
+        DetourHandler(uintptr_t source, function_type trampoline) : DetourHandler(trampoline) {
+            Register(source);
+        }
+
         DetourHandler() = delete;
-        DetourHandler(function_type trampoline) : _originalFunction(), _trampoline(trampoline), _removalOffset(0) { }
+        explicit DetourHandler(function_type trampoline) : _originalFunction(), _trampoline(trampoline), _removalOffset(0) { }
 
         bool Register(uintptr_t offset) {
             bool success = Registry::Instance().Register(offset, _trampoline, &_originalFunction);

@@ -1,11 +1,11 @@
 #include "DebugLogPatch.hpp"
+#include "../Assembly/Decoder.hpp"
 #include "../Assembly/Function.hpp"
 #include "../Assembly/Instruction.hpp"
 
-#include "../Scan.hpp"
-#include "../MemoryHelpers.hpp"
-
 #include "../Logger.hpp"
+#include "../MemoryHelpers.hpp"
+#include "../Scan.hpp"
 
 #include <windows.h>
 
@@ -14,7 +14,7 @@ namespace Patches
     namespace DebugLogs
     {
         constexpr static const Memory::Scan::Pattern NullWrites[] = { 0xC7, 0x04, 0x25, 0x00, 0x00, 0x00, 0x00, 0xA7, 0xDC, 0xEA, 0x0D };
-        
+
         LONG WINAPI UnhandledExceptionFilter(_EXCEPTION_POINTERS* exceptionInfo)
         {
             if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
@@ -23,10 +23,11 @@ namespace Patches
                 if (exceptionInfo->ExceptionRecord->ExceptionInformation[0] == 1)
                 {
                     Logger::Instance().GetLogger("console")->info("Intercepted invalid memory write to 0x{:X}", exceptionInfo->ExceptionRecord->ExceptionInformation[1]);
-
-                    // Silence the error
-                    return EXCEPTION_CONTINUE_EXECUTION;
                 }
+
+                // Silence the error
+                // TODO: temporary band-aid until proper analysis of crash at 7B60A4
+                return EXCEPTION_CONTINUE_EXECUTION;
             }
 
             // Keep searching for a handler
@@ -41,15 +42,12 @@ namespace Patches
 
             std::vector<uintptr_t> faultyAddresses = Memory::Scan::Find(NullWrites, uintptr_t(GetModuleHandle(nullptr)));
 
-            ZydisDecoder decoder;
-            ZyanStatus result = ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64);
-
             uintptr_t moduleBase = uintptr_t(GetModuleHandle(nullptr));
 
             uint32_t failedCount = 0;
             for (uintptr_t faultyAddress : faultyAddresses)
             {
-                Assembly::Function function(faultyAddress, decoder);
+                Assembly::Function function(faultyAddress);
                 std::optional<uintptr_t> epilogueAddress = function.FindEpilogue();
 
                 if (!epilogueAddress)
@@ -62,7 +60,7 @@ namespace Patches
                 {
                     // Compute jump displacement for absolute jmp
                     // TODO: add more flavors of jmp, i'm just lazy
-                    Assembly::Instruction faultyInstruction(faultyAddress, decoder);
+                    Assembly::Instruction faultyInstruction(faultyAddress);
                     uint32_t distance = uint32_t(epilogueAddress.value() - faultyAddress - 5);
                     if (distance < std::numeric_limits<uint32_t>::max())
                     {
