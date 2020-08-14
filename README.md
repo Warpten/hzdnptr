@@ -6,7 +6,9 @@ This repository contains the code for an injectable DLL used to patch potential 
 
 [![Build status](https://ci.appveyor.com/api/projects/status/eathqpg9rxjba75f?svg=true)](https://ci.appveyor.com/project/Warpten/hzdnptr)
 
-For nightly builds, visit [AppVeyor](https://ci.appveyor.com/project/Warpten/hzdnptr/build/artifacts)
+## Current stable
+
+[1.0.6](https://ci.appveyor.com/project/Warpten/hzdnptr/builds/34654694/artifacts)
 
 ## Disclaimer
 
