@@ -23,10 +23,15 @@ public:
     }
 
     template <typename T = spdlog::logger>
-    std::shared_ptr<T> RegisterLogger(const std::string& loggerName, spdlog::sinks_init_list sinks) {
+    std::shared_ptr<T> RegisterLogger(const std::string& loggerName, spdlog::sinks_init_list sinks_) {
+
+        // Abuse the remove idiom to obtain an iterator to the first removed element.
+        std::vector<spdlog::sink_ptr> sinks(sinks_);
+        auto end = std::remove_if(sinks.begin(), sinks.end(), [](spdlog::sink_ptr ptr) -> bool { return !ptr; });
+
         auto [itr, success] = _loggers.emplace(std::piecewise_construct,
             std::forward_as_tuple(loggerName),
-            std::forward_as_tuple(std::make_shared<T>(loggerName, sinks)));
+            std::forward_as_tuple(std::make_shared<T>(loggerName, sinks.begin(), end)));
 
         if (!success)
             return nullptr;
