@@ -52,18 +52,17 @@ std::vector<Process::Module> Process::EnumerateModules() const
     return modules;
 }
 
-std::shared_ptr<Process> ProcessTools::Open(std::string const name, DWORD build, bool log)
+std::shared_ptr<Process> ProcessTools::Open(std::string const name, bool log)
 {
     DWORD_PTR baseAddress;
-    FileVersionInfo ver;
-    HANDLE hnd = GetHandleByName((TCHAR*) name.c_str(), &baseAddress, build, log, &ver);
+    HANDLE hnd = GetHandleByName((TCHAR*) name.c_str(), &baseAddress, log);
     if (hnd == INVALID_HANDLE_VALUE)
         return std::shared_ptr<Process>();
 
-    return std::make_shared<Process>(hnd, baseAddress, ver);
+    return std::make_shared<Process>(hnd, baseAddress);
 }
 
-HANDLE ProcessTools::GetHandleByName(TCHAR* name, DWORD_PTR* baseAddress, DWORD build, bool log, FileVersionInfo* versionInfo)
+HANDLE ProcessTools::GetHandleByName(TCHAR* name, DWORD_PTR* baseAddress, bool log)
 {
     PROCESSENTRY32 entry;
     entry.dwSize = sizeof(PROCESSENTRY32);
@@ -86,7 +85,7 @@ HANDLE ProcessTools::GetHandleByName(TCHAR* name, DWORD_PTR* baseAddress, DWORD 
             process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
             if (process)
             {
-                if (baseAddress || build)
+                if (baseAddress)
                 {
                     MODULEENTRY32 module;
                     module.dwSize = sizeof(MODULEENTRY32);
@@ -96,18 +95,6 @@ HANDLE ProcessTools::GetHandleByName(TCHAR* name, DWORD_PTR* baseAddress, DWORD 
                     {
                         if (baseAddress)
                             *baseAddress = (DWORD_PTR)module.modBaseAddr;
-
-                        FileVersionInfo info;
-                        GetFileVersion(module.szExePath, &info);
-                        if (info.FilePrivatePart != build && build != 0)
-                        {
-                            CloseHandle(moduleSnapshot);
-                            CloseHandle(process);
-                            process = INVALID_HANDLE_VALUE;
-                            continue;
-                        }
-
-                        *versionInfo = info;
                     }
 
                     CloseHandle(moduleSnapshot);
@@ -135,34 +122,4 @@ HANDLE ProcessTools::GetHandleByName(TCHAR* name, DWORD_PTR* baseAddress, DWORD 
     }
 
     return process;
-}
-
-void ProcessTools::GetFileVersion(TCHAR* path, FileVersionInfo* info)
-{
-    DWORD size = GetFileVersionInfoSize(path, NULL);
-    if (!size)
-    {
-        _tprintf(_T("Error in GetFileVersionInfoSize: %d\n"), GetLastError());
-        return;
-    }
-
-    BYTE* buffer = new BYTE[size];
-    if (!GetFileVersionInfo(path, NULL, size, buffer))
-    {
-        _tprintf(_T("Error in GetFileVersionInfo: %d\n"), GetLastError());
-        delete[] buffer;
-        return;
-    }
-
-    VS_FIXEDFILEINFO* fileInfo;
-    UINT fileInfoSize;
-    if (!VerQueryValue(buffer, _T("\\"), (LPVOID*)&fileInfo, &fileInfoSize))
-    {
-        _tprintf(_T("Error in VerQueryValue: %d\n"), GetLastError());
-        delete[] buffer;
-        return;
-    }
-
-    info->Init(fileInfo->dwFileVersionMS, fileInfo->dwFileVersionLS);
-    delete[] buffer;
 }

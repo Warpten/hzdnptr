@@ -159,7 +159,7 @@ void inject(po::variables_map const& vm)
     std::string dllName = vm["dll"].as<std::string>();
     std::string absoluteDllPath = std::filesystem::absolute(vm["dll"].as<std::string>()).string();
 
-    if (auto remoteProcess = ProcessTools::Open(vm["process"].as<std::string>(), 0, false))
+    if (auto remoteProcess = ProcessTools::Open(vm["process"].as<std::string>(), false))
     {
         // Prepare a chunk of memory we will reuse for the various steps of DLL injection and initialization.
         size_t allocationSize = 500;

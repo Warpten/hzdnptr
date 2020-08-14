@@ -12,22 +12,6 @@
 #include <sstream>
 #include <vector>
 
-struct FileVersionInfo
-{
-    WORD FileMajorPart;
-    WORD FileMinorPart;
-    WORD FileBuildPart;
-    WORD FilePrivatePart;
-
-    void Init(DWORD ms, DWORD ls)
-    {
-        FileMajorPart = HIWORD(ms);
-        FileMinorPart = LOWORD(ms);
-        FileBuildPart = HIWORD(ls);
-        FilePrivatePart = LOWORD(ls);
-    }
-};
-
 struct Process
 {
     struct Module
@@ -38,7 +22,7 @@ struct Process
         Module(HMODULE base, std::string name) : Base(base), Name(name) { }
     };
 
-    Process(HANDLE hnd, std::uintptr_t baseAddress, FileVersionInfo const& ver) : _handle(hnd), _baseAddress(baseAddress), _version(ver) { }
+    Process(HANDLE hnd, std::uintptr_t baseAddress) : _handle(hnd), _baseAddress(baseAddress) { }
     ~Process()
     {
         CloseHandle(_handle);
@@ -100,8 +84,6 @@ struct Process
 
         return mbi.Protect != PAGE_NOACCESS;
     }
-
-    FileVersionInfo const& GetFileVersionInfo() const { return _version; }
 
     HANDLE GetHandle() const { return _handle; }
 
@@ -204,7 +186,6 @@ struct Process
 private:
     HANDLE _handle;
     std::uintptr_t _baseAddress;
-    FileVersionInfo _version;
     Cache<256> _dataCache;
     Cache<1024> _stringCache;
 };
@@ -214,10 +195,9 @@ std::string const& Process::Read<std::string>(std::uintptr_t address, bool relat
 
 namespace ProcessTools
 {
-    std::shared_ptr<Process> Open(std::string const name, DWORD build, bool log);
+    std::shared_ptr<Process> Open(std::string const name, bool log);
 
-    HANDLE GetHandleByName(TCHAR* name, DWORD_PTR* baseAddress, DWORD build, bool log, FileVersionInfo* versionInfo);
-    void GetFileVersion(TCHAR* path, FileVersionInfo* info);
+    HANDLE GetHandleByName(TCHAR* name, DWORD_PTR* baseAddress, bool log);
 }
 
 #endif // ProcessTools_h__
