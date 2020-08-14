@@ -6,12 +6,9 @@ This repository contains the code for an injectable DLL used to patch potential 
 
 [![Build status](https://ci.appveyor.com/api/projects/status/eathqpg9rxjba75f?svg=true)](https://ci.appveyor.com/project/Warpten/hzdnptr)
 
-# Important notice
+## Important notices
 
-As of 08/14/20, Guerrilla has released a [patch](https://www.reddit.com/r/horizon/comments/i9jaa0/horizon_zero_dawn_complete_edition_for_pc_patch/), with another patch slated the following week. 
-
-**DO NOT USE THIS DLL ON SAID PATCHED GAME VERSION**
-
+This DLL has been tested on game release, patch-0, and V1.0.1 (14/08/20) of the game.
 
 ## Current stable
 
