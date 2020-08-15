@@ -2,7 +2,8 @@
 #include <memory>
 
 #include "Logger.hpp"
-#include "Patches/DebugLogPatch.hpp"
+#include "Patches/Abort.hpp"
+#include "Patches/InvalidMemoryAccess.hpp"
 
 #include <Windows.h>
 
@@ -43,7 +44,9 @@ extern "C"
 
 		logger->info("Log file '{}' opened.", fs::absolute(fileSink->filename()).string());
 		
-		Patches::DebugLogs::ApplyPatches();
-		return EXIT_SUCCESS;
+		Patches::Abort::Apply();
+		Patches::InvalidMemoryAccess::Apply();
+
+		return ERROR_SUCCESS;
 	}
 }

@@ -25,4 +25,22 @@ namespace Memory
         ::FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<uint8_t*>(address), N);
     }
 
+    void WriteMemory(uintptr_t address, const uint8_t* data, size_t size, bool rebase /* = true */)
+    {
+        if (rebase)
+            address = RebaseAddress(address);
+
+        if (address == 0)
+            return;
+
+        uint8_t* dst = reinterpret_cast<uint8_t*>(address);
+
+        DWORD oldProtection;
+        if (!VirtualProtect(dst, size, PAGE_EXECUTE_READWRITE, &oldProtection))
+            return;
+
+        memcpy(dst, data, size);
+        VirtualProtect(dst, size, oldProtection, &oldProtection);
+    }
+
 }
