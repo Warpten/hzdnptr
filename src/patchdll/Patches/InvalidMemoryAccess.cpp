@@ -24,8 +24,9 @@ namespace Patches::InvalidMemoryAccess
             console->error("HorizonZeroDawn.exe+0x{:x}: Invalid memory {} from/to address 0x{:x}.",
                 exceptionInfo->ContextRecord->Rip - moduleBase, operation, address);
 
-            // Silence the error
-            return EXCEPTION_CONTINUE_EXECUTION;
+            // Silence the error if write
+            if (exceptionInfo->ExceptionRecord->ExceptionInformation[0] == 1)
+                return EXCEPTION_CONTINUE_EXECUTION;
         }
 
         // Keep searching for a handler
