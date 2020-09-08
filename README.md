@@ -8,7 +8,13 @@ This repository contains the code for an injectable DLL used to patch potential 
 
 ## Important notices
 
-This DLL has been tested on game release, patch-0, and V1.0.1 (14/08/20) of the game.
+| Game version | Steam           | Epic               | Notes |
+|--------------|-----------------|--------------------|-------|
+| 1.0.0        | :grey_question: | :white_check_mark: | |
+| 1.0.1        | :grey_question: | :white_check_mark: | |
+| 1.0.2        | :grey_question: | :white_check_mark: | |
+| 1.0.3        | :grey_question: | :white_check_mark: | |
+| 1.0.4        | :grey_question: | :x: (Crashes)      | You shouldn't need this DLL at that point. Forced crashes are still in the game but I've never hit them since 1.0.3 |
 
 ## Current stable
 
